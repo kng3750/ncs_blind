@@ -13,10 +13,10 @@ export function validateQuery(params: URLSearchParams):
 
   if (!orgCoName) return { ok: false, message: "기관명을 입력해 주세요." };
   if (orgCoName.length > 100) return { ok: false, message: "기관명은 100자 이하로 입력해 주세요." };
-  if (!/^\d+$/.test(pageNoRaw) || !Number.isSafeInteger(pageNo) || pageNo < 1) {
+  if (!/^\d+$/.test(pageNoRaw) || !Number.isSafeInteger(pageNo) || pageNo < 1 || pageNo > 999) {
     return { ok: false, message: "페이지 번호는 1 이상의 정수여야 합니다." };
   }
-  if (!/^\d+$/.test(rowsRaw) || !ALLOWED_PAGE_SIZES.includes(numOfRows as 10)) {
+  if (!/^\d+$/.test(rowsRaw) || !Number.isSafeInteger(numOfRows) || numOfRows < 10 || numOfRows > 100) {
     return { ok: false, message: "페이지당 결과 수가 올바르지 않습니다." };
   }
   return { ok: true, value: { orgCoName, pageNo, numOfRows } };

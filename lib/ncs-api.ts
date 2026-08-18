@@ -47,7 +47,10 @@ function collectItems(root: unknown): UnknownRecord[] {
   const visit = (value: unknown) => {
     if (Array.isArray(value)) return value.forEach(visit);
     if (!isRecord(value)) return;
-    if ("orgCoName" in value || "recFieldDetl" in value || "ncsCICdNm" in value) {
+    if (
+      "orgCoName" in value || "recrFieldDetl" in value || "recrtFieldDetl" in value ||
+      "ncsClCdNm" in value || "recrtNo" in value
+    ) {
       found.push(value);
       return;
     }
@@ -70,11 +73,12 @@ function xmlValue(xml: string, tag: string): string {
 }
 
 function parseXml(xml: string): UnknownRecord {
-  const itemMatches = [...xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)];
+  const itemMatches = [...xml.matchAll(/<(?:row|item)(?:\s[^>]*)?>([\s\S]*?)<\/(?:row|item)>/gi)];
   const items = itemMatches.map((match) => ({
     orgCoName: xmlValue(match[1], "orgCoName"),
-    recFieldDetl: xmlValue(match[1], "recFieldDetl"),
-    ncsCICdNm: xmlValue(match[1], "ncsCICdNm"),
+    recrFieldDetl: xmlValue(match[1], "recrFieldDetl") || xmlValue(match[1], "recrtFieldDetl"),
+    ncsClCdNm: xmlValue(match[1], "ncsClCdNm"),
+    recrtNo: xmlValue(match[1], "recrtNo"),
   }));
   return {
     resultCode: xmlValue(xml, "resultCode"), resultMsg: xmlValue(xml, "resultMsg"),
@@ -99,13 +103,14 @@ export function normalizeResponse(raw: unknown, requestedPage: number, requested
       pagination: { pageNo: requestedPage, numOfRows: requestedRows, totalCount: 0, totalPage: 0 },
     };
   }
-  if (!isSuccessMessage && resultCode && !["00", "0", "1", "200"].includes(resultCode)) throw new NcsApiError("UPSTREAM_API_ERROR", resultMsg || "공공데이터 조회에 실패했습니다.");
-  if (!isSuccessMessage && code && !["00", "0", "1", "200"].includes(code)) throw new NcsApiError("UPSTREAM_API_ERROR", resultMsg || "공공데이터 조회에 실패했습니다.");
+  if (!isSuccessMessage && resultCode && !["000", "00", "0", "1", "200"].includes(resultCode)) throw new NcsApiError("UPSTREAM_API_ERROR", resultMsg || "공공데이터 조회에 실패했습니다.");
+  if (!isSuccessMessage && code && !["000", "00", "0", "1", "200"].includes(code)) throw new NcsApiError("UPSTREAM_API_ERROR", resultMsg || "공공데이터 조회에 실패했습니다.");
 
   const items = collectItems(raw).map((item) => ({
     orgCoName: scalar(item.orgCoName) || "-",
-    recFieldDetl: scalar(item.recFieldDetl) || "-",
-    ncsCICdNm: scalar(item.ncsCICdNm) || "-",
+    recFieldDetl: scalar(item.recrFieldDetl) || scalar(item.recrtFieldDetl) || "-",
+    ncsCICdNm: scalar(item.ncsClCdNm) || "-",
+    recrtNo: scalar(item.recrtNo) || "-",
   }));
   const pageNo = positiveNumber(findFirst(raw, ["pageNo"])) || requestedPage;
   const numOfRows = positiveNumber(findFirst(raw, ["numOfRows"])) || requestedRows;
@@ -126,7 +131,7 @@ function serviceKey(): string {
 
 export async function fetchOrganizations(query: { orgCoName: string; pageNo: number; numOfRows: number }) {
   const params = new URLSearchParams({
-    ServiceKey: serviceKey(), pageNo: String(query.pageNo), numOfRows: String(query.numOfRows),
+    serviceKey: serviceKey(), pageNo: String(query.pageNo), numOfRows: String(query.numOfRows),
     returnType: "json", orgCoName: query.orgCoName,
   });
   let response: Response;

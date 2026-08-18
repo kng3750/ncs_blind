@@ -3,8 +3,9 @@ import { NcsApiError, normalizeResponse } from "../lib/ncs-api";
 
 describe("normalizeResponse", () => {
   it("단일 항목을 배열로 정규화하고 페이지 수를 계산한다", () => {
-    const result = normalizeResponse({ response: { header: { resultCode: "00" }, body: { pageNo: 1, numOfRows: 10, totalCount: 21, items: { item: { orgCoName: "한국산업인력공단", recFieldDetl: "건축", ncsCICdNm: "대분류 > 중분류" } } } } }, 1, 10);
+    const result = normalizeResponse({ root: { data: { row: { orgCoName: "한국산업인력공단", recrFieldDetl: "건축", ncsClCdNm: "대분류 > 중분류", recrtNo: "123" } }, dataInfo: { code: "000", pageNo: 1, totCnt: 21, totalPage: 3 } } }, 1, 10);
     expect(result.items).toHaveLength(1);
+    expect(result.items[0]).toEqual({ orgCoName: "한국산업인력공단", recFieldDetl: "건축", ncsCICdNm: "대분류 > 중분류", recrtNo: "123" });
     expect(result.pagination.totalPage).toBe(3);
   });
   it("배열 항목과 totCnt/totalPage를 처리한다", () => {

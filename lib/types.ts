@@ -2,6 +2,7 @@ export type BlindRecruitmentItem = {
   orgCoName: string;
   recFieldDetl: string;
   ncsCICdNm: string;
+  recrtNo: string;
 };
 
 export type Pagination = {
