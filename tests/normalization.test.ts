@@ -18,4 +18,8 @@ describe("normalizeResponse", () => {
     const result = normalizeResponse({ resultCode: "03", resultMsg: "empty data" }, 2, 20);
     expect(result).toEqual({ items: [], pagination: { pageNo: 2, numOfRows: 20, totalCount: 0, totalPage: 0 } });
   });
+  it("정상 메시지가 있으면 문서와 다른 상태 코드도 성공으로 처리한다", () => {
+    const result = normalizeResponse({ resultCode: "999", message: "정상", items: [{ orgCoName: "한국기관" }] }, 1, 10);
+    expect(result.items[0].orgCoName).toBe("한국기관");
+  });
 });
