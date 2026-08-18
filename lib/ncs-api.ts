@@ -91,7 +91,14 @@ export function normalizeResponse(raw: unknown, requestedPage: number, requested
   const resultCode = scalar(findFirst(raw, ["resultCode"]));
   const resultMsg = scalar(findFirst(raw, ["resultMsg", "message"]));
   const code = scalar(findFirst(raw, ["code"]));
-  if (resultCode && !["00", "0", "1"].includes(resultCode)) throw new NcsApiError("UPSTREAM_API_ERROR", resultMsg || "공공데이터 조회에 실패했습니다.");
+  const isEmptyResult = /empty\s*data|no\s*data|데이터가\s*(없|존재하지)|결과가\s*없/i.test(resultMsg);
+  if (isEmptyResult) {
+    return {
+      items: [],
+      pagination: { pageNo: requestedPage, numOfRows: requestedRows, totalCount: 0, totalPage: 0 },
+    };
+  }
+  if (resultCode && !["00", "0", "1", "200"].includes(resultCode)) throw new NcsApiError("UPSTREAM_API_ERROR", resultMsg || "공공데이터 조회에 실패했습니다.");
   if (code && !["00", "0", "1", "200"].includes(code)) throw new NcsApiError("UPSTREAM_API_ERROR", resultMsg || "공공데이터 조회에 실패했습니다.");
 
   const items = collectItems(raw).map((item) => ({

@@ -14,4 +14,8 @@ describe("normalizeResponse", () => {
   });
   it("누락 필드에는 대시를 사용한다", () => expect(normalizeResponse({ items: [{ orgCoName: "기관" }] }, 1, 10).items[0].recFieldDetl).toBe("-"));
   it("실패 결과 코드를 오류로 변환한다", () => expect(() => normalizeResponse({ resultCode: "99", resultMsg: "실패" }, 1, 10)).toThrow(NcsApiError));
+  it("empty data 응답은 오류가 아닌 빈 검색 결과로 처리한다", () => {
+    const result = normalizeResponse({ resultCode: "03", resultMsg: "empty data" }, 2, 20);
+    expect(result).toEqual({ items: [], pagination: { pageNo: 2, numOfRows: 20, totalCount: 0, totalPage: 0 } });
+  });
 });
